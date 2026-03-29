@@ -1,0 +1,47 @@
+Started by user admin
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/LLM-Assistant-Test
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/LLM-Assistant-Test/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/company/auth-service.git # timeout=10
+Fetching upstream changes from https://github.com/company/auth-service.git
+ > git --version # timeout=10
+ > git fetch --tags --force --progress -- https://github.com/company/auth-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision 8f9a3b2c1d4e5f6g7h8i9j0 (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 8f9a3b2c1d4e5f6g7h8i9j0 # timeout=10
+Commit message: "Update database connection pooling properties"
+
+[LLM-Assistant-Test] $ /bin/sh -xe /tmp/jenkins11223344.sh
++ echo 'Initializing workspace...'
+Initializing workspace...
+
+[LLM-Assistant-Test] $ /bin/sh -xe /tmp/jenkins11223345.sh
++ echo 'Compiling application code...'
+Compiling application code...
++ mvn clean install -DskipTests
+[INFO] Scanning for projects...
+[INFO] BUILD SUCCESS
+[INFO] Total time:  1.234 s
+
+[LLM-Assistant-Test] $ /bin/sh -xe /tmp/jenkins11223346.sh
++ echo 'Running integration tests...'
+Running integration tests...
++ mvn test -P integration
+[INFO] Scanning for projects...
+[INFO] Running com.company.auth.DatabaseIntegrationTest
+FATAL ERROR: NullReferenceException in DatabaseConnector.java at line 104
+Connection refused to database jdbc:mysql://localhost:3306/users
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
++ exit 1
+Build step 'Execute shell' marked build as failure
+Finished: FAILURE

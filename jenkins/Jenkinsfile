@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+
+    environment {
+        LLM_API_KEY = credentials('llm-gemini-api-key')
+        SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
+    }
+
+    stages {
+        stage('Setup Workspace') {
+            steps {
+                echo "Initializing workspace..."
+
+            }
+        }
+        
+        stage('Simulate Compilation') {
+            steps {
+                echo "Compiling application code..."
+                sh 'sleep 2' // Fake some build time
+            }
+        }
+        
+        stage('Simulate Test Failure') {
+            steps {
+                echo "Running integration tests..."
+                // We intentionally print an error message and exit with 1 to break the build
+                sh 'echo "FATAL ERROR: NullReferenceException in DatabaseConnector.java at line 104" >&2'
+                sh 'echo "Connection refused to database jdbc:mysql://localhost:3306/users" >&2'
+                sh 'exit 1' 
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Pipeline failed! Waking up the LLM DevOps Assistant..."
+            
+            script {
+                def rawLogLines = currentBuild.rawBuild.getLog(150)
+                def logContent = rawLogLines.join('\n')
+                
+                // Write log lines to a temporary text file in the workspace
+                writeFile file: 'workspace_failed_log.txt', text: logContent
+                
+                // Execute the Python script, passing the newly created log file
+                sh '''
+                    echo "Setting up Python environment..."
+                    python3 -m venv llm_env
+                    
+                    # Activate the virtual environment (. is the same as source)
+                    . llm_env/bin/activate
+                    
+                    # Install dependencies (ensure requirements.txt exists in your repo root)
+                    pip install -q -r requirements.txt
+                    
+                    echo "Analyzing failure..."
+                    # Run the brain! We pass the text file as a command-line argument
+                    python3 src/main.py workspace_failed_log.txt
+                '''
+            }
+        }
+        success {
+            echo "Build completed successfully! "
+        }
+        always {
+            // Clean up the virtual environment and log file so we don't pollute the workspace
+            sh 'rm -rf llm_env workspace_failed_log.txt || true'
+        }
+    }
+}
+
+
+
+
