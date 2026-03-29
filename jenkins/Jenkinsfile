@@ -10,6 +10,8 @@ pipeline {
         stage('Setup Workspace') {
             steps {
                 echo "Initializing workspace..."
+                echo "Downloading code from GitHub..."
+                git branch: 'main', url: 'https://github.com/Pa04rth/jenkins-llm-slack-project.git'
 
             }
         }
