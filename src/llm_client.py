@@ -1,59 +1,47 @@
-# File responsible to have the prompt for the LLM and the function to call the LLM API to get the response.
-import requests , os , json
-from log_parser import parse_log_file
-llm_prompt = """You are an expert DevOps engineer. Analyze the following Jenkins build log snippet. Identify the root cause of the failure, explain it in one sentence, and provide a 2-step actionable fix."""
-from dotenv import load_dotenv
-load_dotenv()
+import os
+import requests
+import dotenv
+dotenv.load_dotenv()
 
-# Better control using requests.
-def call_llm_api(parsed_data):
-    
-    log_snippet =  "\n".join([
-        f"{entry['timestamp']} - {entry['level']} - {entry['message']}"
-        for entry in parsed_data
-    ])
-    
-    full_prompt = f"{llm_prompt}\n\nLog Snippet:\n{log_snippet}"
-    
+
+def get_ai_summary(log_text):
+    """
+    Sends the prompt and the parsed log to the Gemini API and returns the summary.
+    """
     api_key = os.getenv("LLM_API_KEY")
-    
-    
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    if not api_key:
+        return "⚠️ Error: LLM_API_KEY environment variable not found."
 
-    headers = {
-        "Content-Type": "application/json"
-    }
+    # The API endpoint for Gemini 2.5 Flash
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    
+    # BUG FIX 1: We inject the actual log_text into the prompt string using f-strings
+    full_prompt = f"""
+    You are an expert DevOps engineer. Analyze the following Jenkins build log snippet. 
+    Identify the root cause of the failure, explain it in one sentence, and provide a 2-step actionable fix.
+    
+    === BEGIN JENKINS LOG ===
+    {log_text}
+    === END JENKINS LOG ===
+    """
 
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": full_prompt}
-                ]
-            }
-        ]
+        "contents": [{
+            "parts": [{"text": full_prompt}]
+        }]
     }
 
-    response = requests.post(
-        f"{url}?key={api_key}",
-        headers=headers,
-        json=payload
-    )
-    if response.status_code != 200:
-        raise Exception(f"API Error: {response.text}")
-
-    return response.json()
-
-# example response.json - {
-#   "candidates": [
-#     {
-#       "content": {
-#         "parts": [
-#           {
-#             "text": "LLM response here"
-#           }
-#         ]
-#       }
-#     }
-#   ]
-# }
+    try:
+        # Send the request to Google
+        response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'})
+        response.raise_for_status() # Throw an error if the request fails
+        
+        data = response.json()
+        
+        # BUG FIX 2: Dig into the JSON dictionary to extract ONLY the AI's text response
+        clean_ai_text = data['candidates'][0]['content']['parts'][0]['text']
+        
+        return clean_ai_text
+        
+    except Exception as e:
+        return f"❌ AI Analysis Failed: {e}"
