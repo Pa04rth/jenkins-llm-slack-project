@@ -44,7 +44,7 @@ pipeline {
                 
                 // Write log lines to a temporary text file in the workspace
                 writeFile file: 'workspace_failed_log.txt', text: logContent
-                
+                sh 'echo "--- CHECKING LOG FILE ---" && cat workspace_failed_log.txt'
                 // Execute the Python script, passing the newly created log file
                 sh '''
                     echo "Setting up Python environment..."
