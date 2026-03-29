@@ -56,3 +56,59 @@ The workflow is entirely event-driven, triggered by a `post { failure }` conditi
 ├── requirements.txt        # Python dependencies (requests)
 └── README.md               # Project documentation
 ```
+
+🚀 Step-by-Step Setup Guide
+Want to run this yourself? Here is the exact guide to spinning up the infrastructure from zero.
+
+1. Prerequisites & Secrets
+GitHub: Fork or clone this repository.
+
+Slack: Generate an Incoming Webhook URL for your desired channel.
+
+LLM: Get a free Google Gemini API Key.
+
+2. Jenkins Docker Infrastructure
+We use Docker to spin up an isolated Jenkins controller.
+
+Bash
+# Pull and run the Jenkins LTS image
+docker run -d -p 8080:8080 -p 50000:50000 --name jenkins-ai -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts
+
+# Access the container as root to install Python natively
+docker exec -u root -it jenkins-ai bash
+apt-get update && apt-get install -y python3 python3-venv python3-pip
+exit
+
+# Retrieve the initial admin password to unlock Jenkins UI
+docker exec jenkins-ai cat /var/jenkins_home/secrets/initialAdminPassword
+3. Pipeline Configuration
+Inject Credentials:
+
+In Jenkins, navigate to Manage Jenkins > Credentials > System > Global credentials.
+
+Add a Secret text for your Gemini API Key (ID: llm-api-key).
+
+Add a Secret text for your Slack Webhook URL (ID: slack-webhook-url).
+
+Approve Groovy Sandbox Methods:
+
+Go to Manage Jenkins > In-Process Script Approval.
+
+Approve the signatures for getRawBuild and getLog to allow Jenkins to extract its own logs securely.
+
+Create the Job:
+
+Create a new Pipeline item.
+
+Choose Pipeline script from SCM, select Git, input your repository URL, specify the main branch, and set the Script Path to jenkins/Jenkinsfile.
+
+Trigger the Pipeline:
+
+Click Build Now. Watch the pipeline catch the simulated failure, spin up the Python environment, and push the AI analysis to your Slack.
+
+🔮 Future Enhancements
+Jira/Linear Integration: Automatically create a tracked bug ticket with the AI summary attached if the build fails on a production or main branch.
+
+Smart Log Truncation: Implement a chunking algorithm to send larger, more complex logs to the LLM without exceeding context token limits.
+
+Native Jenkins Plugin: Port the lightweight Python logic into a native Java/HPI Jenkins plugin for easier enterprise distribution and UI configuration.
