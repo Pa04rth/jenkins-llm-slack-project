@@ -4,7 +4,7 @@ import dotenv
 dotenv.load_dotenv()
 
 
-def get_ai_summary(log_text):
+def call_llm_api(log_text):
     """
     Sends the prompt and the parsed log to the Gemini API and returns the summary.
     """
