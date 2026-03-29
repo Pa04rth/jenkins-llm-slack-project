@@ -57,58 +57,119 @@ The workflow is entirely event-driven, triggered by a `post { failure }` conditi
 └── README.md               # Project documentation
 ```
 
-🚀 Step-by-Step Setup Guide
-Want to run this yourself? Here is the exact guide to spinning up the infrastructure from zero.
+# 🚀 Step-by-Step Setup Guide
 
-1. Prerequisites & Secrets
-GitHub: Fork or clone this repository.
+## 1️⃣ Prerequisites & Secrets
 
-Slack: Generate an Incoming Webhook URL for your desired channel.
+- Clone or fork this repository
+- Create a Slack Incoming Webhook URL
+- Generate a Google Gemini API Key
 
-LLM: Get a free Google Gemini API Key.
+---
 
-2. Jenkins Docker Infrastructure
-We use Docker to spin up an isolated Jenkins controller.
+## 2️⃣ Setup Jenkins using Docker
 
-Bash
-# Pull and run the Jenkins LTS image
-docker run -d -p 8080:8080 -p 50000:50000 --name jenkins-ai -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts
+Run Jenkins container:
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  --name jenkins-ai \
+  -v jenkins_home:/var/jenkins_home \
+  jenkins/jenkins:lts
 
 # Access the container as root to install Python natively
+
 docker exec -u root -it jenkins-ai bash
 apt-get update && apt-get install -y python3 python3-venv python3-pip
 exit
 
-# Retrieve the initial admin password to unlock Jenkins UI
+## 🔐 Retrieve Jenkins Admin Password
+
 docker exec jenkins-ai cat /var/jenkins_home/secrets/initialAdminPassword
-3. Pipeline Configuration
-Inject Credentials:
 
-In Jenkins, navigate to Manage Jenkins > Credentials > System > Global credentials.
+--------------------------------------------------
 
-Add a Secret text for your Gemini API Key (ID: llm-api-key).
+## ⚙️ Pipeline Configuration
 
-Add a Secret text for your Slack Webhook URL (ID: slack-webhook-url).
+### 🔑 Inject Credentials
 
-Approve Groovy Sandbox Methods:
+In Jenkins, navigate to:
 
-Go to Manage Jenkins > In-Process Script Approval.
+Manage Jenkins → Credentials → System → Global credentials
 
-Approve the signatures for getRawBuild and getLog to allow Jenkins to extract its own logs securely.
+Add:
 
-Create the Job:
+- Secret Text
+  ID: llm-api-key (Gemini API Key)
 
-Create a new Pipeline item.
+- Secret Text
+  ID: slack-webhook-url (Slack Webhook URL)
 
-Choose Pipeline script from SCM, select Git, input your repository URL, specify the main branch, and set the Script Path to jenkins/Jenkinsfile.
+--------------------------------------------------
 
-Trigger the Pipeline:
+### ✅ Approve Groovy Sandbox Methods
 
-Click Build Now. Watch the pipeline catch the simulated failure, spin up the Python environment, and push the AI analysis to your Slack.
+Go to:
 
-🔮 Future Enhancements
-Jira/Linear Integration: Automatically create a tracked bug ticket with the AI summary attached if the build fails on a production or main branch.
+Manage Jenkins → In-Process Script Approval
 
-Smart Log Truncation: Implement a chunking algorithm to send larger, more complex logs to the LLM without exceeding context token limits.
+Approve the following signatures:
 
-Native Jenkins Plugin: Port the lightweight Python logic into a native Java/HPI Jenkins plugin for easier enterprise distribution and UI configuration.
+- getRawBuild
+- getLog
+
+--------------------------------------------------
+
+### 🛠️ Create the Job
+
+1. Create a new Pipeline item
+2. Select Pipeline script from SCM
+3. Choose Git
+4. Enter your repository URL
+5. Set branch to main
+6. Set Script Path to jenkins/Jenkinsfile
+
+--------------------------------------------------
+
+### ▶️ Trigger the Pipeline
+
+- Click Build Now
+- Observe the pipeline:
+  - Detects failure
+  - Extracts logs
+  - Runs Python analysis
+  - Sends AI-generated summary to Slack
+## 🔮 Future Enhancements
+
+- **Jira / Linear Integration**
+  Automatically create a bug ticket with the AI-generated summary when a build fails (especially on `main` or production branches).
+
+- **Smart Log Chunking**
+  Implement a chunking mechanism to process large logs without exceeding LLM token limits.
+
+- **Advanced Failure Classification**
+  Categorize failures (e.g., build error, test failure, infra issue) for better triaging and analytics.
+
+- **Multi-Model Support**
+  Add support for multiple LLM providers (OpenAI, Anthropic) with fallback mechanisms.
+
+- **Cost Optimization Layer**
+  Dynamically choose between fast/cheap vs powerful models based on log complexity.
+
+- **Historical Insights Dashboard**
+  Store past failures and visualize trends (MTTR, common errors, flaky tests).
+
+- **Auto-Fix Suggestions (Experimental)**
+  Generate and optionally trigger automated fixes (e.g., retry jobs, restart services).
+
+- **Native Jenkins Plugin**
+  Convert the Python-based system into a native Jenkins plugin for easier enterprise adoption.
+
+- **Role-Based Notifications**
+  Send alerts to specific teams based on failure type (e.g., backend, DevOps, QA).
+
+- **Slack Interactive Actions**
+  Add buttons in Slack messages (e.g., "Retry Build", "View Logs", "Create Ticket").
+```
