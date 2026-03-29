@@ -78,18 +78,23 @@ docker run -d \
   --name jenkins-ai \
   -v jenkins_home:/var/jenkins_home \
   jenkins/jenkins:lts
+```
 
 # Access the container as root to install Python natively
 
+```bash
 docker exec -u root -it jenkins-ai bash
 apt-get update && apt-get install -y python3 python3-venv python3-pip
 exit
+```
 
 ## 🔐 Retrieve Jenkins Admin Password
 
+```bash
 docker exec jenkins-ai cat /var/jenkins_home/secrets/initialAdminPassword
+```
 
---------------------------------------------------
+---
 
 ## ⚙️ Pipeline Configuration
 
@@ -107,7 +112,7 @@ Add:
 - Secret Text
   ID: slack-webhook-url (Slack Webhook URL)
 
---------------------------------------------------
+---
 
 ### ✅ Approve Groovy Sandbox Methods
 
@@ -120,7 +125,7 @@ Approve the following signatures:
 - getRawBuild
 - getLog
 
---------------------------------------------------
+---
 
 ### 🛠️ Create the Job
 
@@ -131,7 +136,7 @@ Approve the following signatures:
 5. Set branch to main
 6. Set Script Path to jenkins/Jenkinsfile
 
---------------------------------------------------
+---
 
 ### ▶️ Trigger the Pipeline
 
@@ -141,6 +146,7 @@ Approve the following signatures:
   - Extracts logs
   - Runs Python analysis
   - Sends AI-generated summary to Slack
+
 ## 🔮 Future Enhancements
 
 - **Jira / Linear Integration**
@@ -172,4 +178,7 @@ Approve the following signatures:
 
 - **Slack Interactive Actions**
   Add buttons in Slack messages (e.g., "Retry Build", "View Logs", "Create Ticket").
+
+```
+
 ```
